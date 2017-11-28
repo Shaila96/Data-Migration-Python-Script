@@ -14,8 +14,6 @@ def handleRemoveReadonly(func, path, exc):
 
         # shutil.rmtree(new_vid_dir, ignore_errors=False, onerror=handleRemoveReadonly)
 
-
-
         # pathlib.Path(new_vid_dir).mkdir(parents=True, exist_ok=True)
         # os.makedirs("ABC")
 
@@ -32,7 +30,9 @@ def handleRemoveReadonly(func, path, exc):
         #         #     subfolder.close()
 
 
-
+        # print("#############")
+        # print(subject_path)
+        # print("#############")
 
 
         # print("\npath+filename:")

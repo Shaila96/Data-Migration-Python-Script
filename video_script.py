@@ -10,16 +10,15 @@ data_dir = "Data"
 testing_dir = "Testing_dir"
 
 vid_dir = "Video"
-new_vid_dir = "Testing_video_dir22"
+new_vid_dir = "Testing_video_dir"
 
+shutil.rmtree(new_vid_dir, ignore_errors=True)
 
-# shutil.rmtree(new_vid_dir, ignore_errors=True)
 
 def createDirectoryIfNotExixts(path):
     if not os.path.isdir(path):
         print(str(path) + ' has been created')
         os.mkdir(path)
-        # os.system('mkdir Testing_dir')
     else:
         print(str(path) + ' is already created')
 
@@ -50,10 +49,6 @@ for dirName, subdirList, fileList in os.walk(vid_dir):
                 createDirectoryIfNotExixts(subfolder_path)
                 for session in list_session:
                     createDirectoryIfNotExixts(os.path.join(subfolder_path, session))
-                    with open(os.path.join(subfolder_path, 'Order.csv'), "a+", newline='') as subfolder:
-                        writer = csv.writer(subfolder, delimiter=',')
-                        writer.writerow([session])
-                        subfolder.close()
 
                 path1 = os.path.join(dirName, fname)
                 path2 = os.path.join(new_vid_dir, name_subject, name_session, fname)
@@ -61,9 +56,30 @@ for dirName, subdirList, fileList in os.walk(vid_dir):
                 # os.rename(os.path.join(dirName, fname),
                 #           os.path.join(new_vid_dir, name_subject, name_session, fname))
 
-                shutil.copy2(path1, path2)
+                ##################################
+                ##########COPYING VIDEO###########
+                ##################################
+                # shutil.copy2(path1, path2)
 
-##Create Config File
+
+def get_immediate_subdirectories(a_dir):
+    return [name for name in os.listdir(a_dir)
+            if os.path.isdir(os.path.join(a_dir, name))]
+
+
+subject_list = get_immediate_subdirectories(new_vid_dir)
+
+##Create order file inside every subject consisting the session name
+for subject in subject_list:
+    subject_path = os.path.join(new_vid_dir, subject)
+
+    with open(os.path.join(subject_path, 'order.csv'), "a+", newline='') as subj:
+        for session in list_session:
+            writer = csv.writer(subj, delimiter=',')
+            writer.writerow([session])
+        subj.close()
+
+##Create config file with the subject list
 for sub in os.listdir(new_vid_dir):
     with open(os.path.join(new_vid_dir, 'config.csv'), "a+", newline='') as csv_file:
         writer = csv.writer(csv_file, delimiter=',')

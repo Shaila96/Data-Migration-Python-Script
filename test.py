@@ -14,10 +14,11 @@ list_session = ['BaseLine', 'PracticeDrive', 'NormalDrive', 'CognitiveDrive', 'M
 
 # temporary list for collecting the names of the subject
 temp_list = []
+data_dir = 'Data'
 
 # this is reading from the file that contains all the csv file only
 # this is code where it is used when we have two seperate files for csv and there is a seperate file for videos
-for dirName, subdirList, fileList in os.walk('Data'):
+for dirName, subdirList, fileList in os.walk(data_dir):
     for fname in fileList:
         # print("\nfname: ")
         # print(fname)
