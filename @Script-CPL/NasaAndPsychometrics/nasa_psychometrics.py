@@ -131,39 +131,6 @@ def copyVideoFiles():
                     # shutil.copy2(path1, path2)
                 else:
                     continue
-# Converts excel to csv format
-def csv_from_excel(xls_filename, csv_filename):
-    data_xls = pd.read_excel(xls_filename)
-    data_xls = data_xls[8:]
-    data_xls.to_csv(csv_filename, encoding='utf-8', index=False, header=None)
-
-# Replace strings and convert file name
-def psychometric_file_convert(prior_file_path, psychometrics_file_path):
-    with open(prior_file_path, "rt") as fin:
-        with open(psychometrics_file_path, "wt") as fout:
-            for line in fin:
-                fout.write(line.replace(':', ','))
-
-
-def copyNasaAndPsychometricsFiles():
-    for directoryName, subdirectoryList, fileList in os.walk(data_dir):
-        for file_name in fileList:
-            if (lowerCase(file_name) != lowerCase(order_file_name) and lowerCase(file_name) != lowerCase(config_file_name)):
-                #Implementation for nasa files
-                if (file_name.endswith(".bar.xlsx")):
-                    new_folder_name = "T0" + file_name[7:9]
-                    if isDirectoryExists(os.path.join(new_dir, new_folder_name)):
-                        excel_file_path = os.path.join(data_dir, file_name)
-                        nasa_task_file_path = os.path.join(new_dir, new_folder_name, nasa_task_file_name)
-                        csv_from_excel(excel_file_path, nasa_task_file_path)
-
-                #Implementation for psychometric files
-                if (file_name.endswith(".tp")):
-                    new_folder_name = "T0" + file_name[7:9]
-                    if isDirectoryExists(os.path.join(new_dir, new_folder_name)):
-                        prior_file_path = os.path.join(data_dir, file_name)
-                        psychometrics_file_path = os.path.join(new_dir, new_folder_name, psychometrics_file_name)
-                        psychometric_file_convert(prior_file_path, psychometrics_file_path)
 
 
 def makeFolderStructure():
@@ -177,9 +144,57 @@ def makeFolderStructure():
     createSubjectAndSessionFolders(subject_list)
     createConfigFile()
 
-########################
-# makeFolderStructure()
-# copyCsvFiles()
-# copyVideoFiles()
 
+# Converts excel to csv format
+def csv_from_excel(xls_filename, csv_filename):
+    data_xls = pd.read_excel(xls_filename)
+    data_xls = data_xls[8:]
+    data_xls.to_csv(csv_filename, encoding='utf-8', index=False, header=None)
+
+
+# Replace strings and convert file name
+def psychometric_file_convert(prior_file_path, psychometrics_file_path):
+    with open(prior_file_path, "rt") as fin:
+        with open(psychometrics_file_path, "wt") as fout:
+            for line in fin:
+                fout.write(line.replace(':', ','))
+
+
+def copyNasaAndPsychometricsFiles():
+    for directoryName, subdirectoryList, fileList in os.walk(data_dir):
+        for file_name in fileList:
+            if (lowerCase(file_name) != lowerCase(order_file_name) and lowerCase(file_name) != lowerCase(
+                    config_file_name)):
+                # Implementation for nasa files
+                if (file_name.endswith(".bar.xlsx")):
+                    new_folder_name = "T0" + file_name[7:9]
+                    if isDirectoryExists(os.path.join(new_dir, new_folder_name)):
+                        excel_file_path = os.path.join(data_dir, file_name)
+                        nasa_task_file_path = os.path.join(new_dir, new_folder_name, nasa_task_file_name)
+                        csv_from_excel(excel_file_path, nasa_task_file_path)
+
+                # Implementation for psychometric files
+                if (file_name.endswith(".tp")):
+                    new_folder_name = "T0" + file_name[7:9]
+                    if isDirectoryExists(os.path.join(new_dir, new_folder_name)):
+                        prior_file_path = os.path.join(data_dir, file_name)
+                        psychometrics_file_path = os.path.join(new_dir, new_folder_name, psychometrics_file_name)
+                        psychometric_file_convert(prior_file_path, psychometrics_file_path)
+
+
+def createSubjectDirectory():
+    data_df = pd.read_csv("ConfigAndOrderFile\config.csv", index_col=False, header=None)
+
+    # This doesn't work!!
+    # subject_list = list(data_df[0].tolist)
+    subject_list = list(data_df[0])
+    print(subject_list)
+
+    for subfolder in subject_list:
+        subfolder_path = os.path.join(new_dir, subfolder)
+        os.mkdir(subfolder_path)
+
+
+
+createSubjectDirectory()
 copyNasaAndPsychometricsFiles()
