@@ -3,6 +3,7 @@
 import httplib2
 import os
 import time
+import shutil
 import urllib.request
 import io
 import apiclient
@@ -64,19 +65,30 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
-def downloadFileUsingGoogleDriveApi(drive_service, file_id, fileName):
-    # request = drive_service.files().get_media(fileId=file_id)
-    # request = drive_service.files().export_media(fileId=file_id, mimeType='application/xlsx')
-    # request = drive_service.files().export_media(fileId=file_id, mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    request = drive_service.files().export_media(fileId=file_id, mimeType='application/vnd.google-apps.spreadsheet')
+def createDirectoryIfNotExixts(path):
+    if not os.path.isdir(path):
+        print(str(path) + ' has been created')
+        os.mkdir(path)
+    # else:
+    #     print(str(path) + ' is already created')
 
-    fh = io.BytesIO()
-    # fh = open(fileName, 'wb')
+def downloadFileUsingGoogleDriveApi(drive_service, file_id, fileName):
+    request = drive_service.files().get_media(fileId=file_id)
+    # request = drive_service.files().export_media(fileId=file_id, mimeType='application/pdf')
+    # request = drive_service.files().export_media(fileId=file_id, mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    # request = drive_service.files().export_media(fileId=file_id, mimeType='application/vnd.google-apps.spreadsheet')
+
+    # fh = io.BytesIO()
+    dest_folder = "DownloadedData-NasaTask"
+    # shutil.rmtree(dest_folder, ignore_errors=True)
+    createDirectoryIfNotExixts(dest_folder)
+    # os.mkdir(dest_folder)
+    fh = open(os.path.join(dest_folder,fileName), 'wb')
     downloader = MediaIoBaseDownload(fh, request)
     done = False
     while done is False:
         status, done = downloader.next_chunk()
-        # print("Download " + str(status.progress() * 100))
+        print("Download " + str(status.progress() * 100))
 
 def getFileList(drive_service, query):
     listOfDriveFiles = []
@@ -195,8 +207,8 @@ def main():
     # TT2: 0B00ugPsj4f4RLTg2b2ExZTBfcEU
     # SIM2: 0B00ugPsj4f4RTjZsNUlFRzJfMzA
     drive_id = "0B00ugPsj4f4RTjZsNUlFRzJfMzA"
-    # file_extension = ".tp"
-    file_extension = ".bar"
+    file_extension = ".tp"
+    # file_extension = ".bar"
     list = findFiles(service, file_extension, drive_id)
     print(list)
 
