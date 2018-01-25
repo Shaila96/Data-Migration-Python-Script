@@ -92,7 +92,7 @@ def getFileList(drive_service, query):
             listOfDriveFiles.append(driveFile)
         page_token = response.get('nextPageToken', None)
         if page_token is None:
-            break;
+            break
     return listOfDriveFiles
 
 def getSubjectFolderList(drive_service, folderId):
@@ -112,7 +112,7 @@ def getSubjectFolderList(drive_service, folderId):
                 print('Found folder: %s (%s)' % (file.get('name'), file.get('id')))
         page_token = response.get('nextPageToken', None)
         if page_token is None:
-            break;
+            break
     return subjectFolderList
 
 def findFolder(drive_service, name):
@@ -129,7 +129,7 @@ def findFolder(drive_service, name):
             print('Found file: %s (%s)' % (file.get('name'), file.get('id')))
         page_token = response.get('nextPageToken', None)
         if page_token is None:
-            break;
+            break
 
 def findFile(drive_service, text_to_match, folderId):
     query = "'" + folderId + "' in parents and trashed=false"
