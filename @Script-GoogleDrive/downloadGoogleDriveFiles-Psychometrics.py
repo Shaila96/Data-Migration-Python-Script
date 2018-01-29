@@ -207,8 +207,8 @@ def main():
     # TT2: 0B00ugPsj4f4RLTg2b2ExZTBfcEU
     # SIM2: 0B00ugPsj4f4RTjZsNUlFRzJfMzA
     drive_id = "0B00ugPsj4f4RTjZsNUlFRzJfMzA"
+    # file_extension = ".xlsx"
     file_extension = ".tp"
-    # file_extension = ".bar"
     list = findFiles(service, file_extension, drive_id)
     print(list)
 
