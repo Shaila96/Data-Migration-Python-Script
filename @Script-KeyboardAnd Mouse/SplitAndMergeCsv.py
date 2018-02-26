@@ -4,11 +4,9 @@ from fnmatch import fnmatch
 from os import listdir
 
 data_dir = "Data"
-input_dir = "Input"
-output_dir = "Output"
-
+input_dir = "InputOutput"
 input_data_path = os.path.join(data_dir, input_dir)
-output_data_path = os.path.join(data_dir, output_dir)
+file_type_static = ['key_strokes', 'mouse']
 
 
 def find_filenames(path_to_dir, suffix):
@@ -30,12 +28,27 @@ def createDirectoryIfNotExixts(path):
         os.mkdir(path)
 
 
-def covertToCsv(df, file_dest):
-    df = df[['KeystrokeID', 'Time', 'Key']]
+def covertToKeystrokesCsv(df, file_dest):
+    df = df[['#KeystrokeID', 'Time', 'IsKeyDown', 'Key']]
+    df.to_csv(file_dest, index=False)
+
+def covertToMouseCsv(df, file_dest):
+    df = df[['Time', 'X', 'Y', 'Type']]
     df.to_csv(file_dest, index=False)
 
 
-def addRows(file_name, df, ind=0):
+
+def get_key_stroke_row_data(current_time):
+    return {"#KeystrokeID": 0, "Time": current_time, "IsKeyDown": 0, "Key": 'NA'}
+
+def get_mouse_row_data(prior_row, current_time):
+    # print(row)
+    print("Time: " + str(prior_row.Time))
+    return {"Time": current_time, "X": prior_row.X, "Y": prior_row.Y, "Type": prior_row.Type}
+
+
+
+def addRows(file_type, file_name, file_path, df, ind=0):
     # Assigning very first row time from the starting of the ind
     current_time = int(df.loc[0 + ind].Time)
     is_index_changed = False
@@ -50,11 +63,15 @@ def addRows(file_name, df, ind=0):
         # row_index = index
 
         if ((time_diff) > 1):
-
+            row_data = df.loc[row_index - 1]
             for time_in in range(1, time_diff):
                 current_time = current_time + 1
-
-                d = {"KeystrokeID": 0, "Time": current_time, "Key": 'NA'}
+                d = None
+                if file_type == file_type_static[0]:
+                    d = get_key_stroke_row_data(current_time)
+                elif file_type == file_type_static[1]:
+                    ####ADD MOUSE DATA###
+                    d = get_mouse_row_data(row_data, current_time)
                 line = pd.DataFrame(d, index=[row_index])
                 df = pd.concat([df.ix[:row_index - 1], line, df.ix[row_index:]]).reset_index(drop=True)
                 row_index = row_index + 1
@@ -64,47 +81,37 @@ def addRows(file_name, df, ind=0):
         elif (time_diff) == 1:
             current_time = temp_time
 
+        ##-- If the index is not changed, it means there might be some more dummy row to add --##
         if (is_index_changed):
-            addRows(file_name, df, row_index)
+            addRows(file_type, file_name, file_path, df, row_index)
             ##-- This break is IMPORTANT --##
             ##-- If we continue after changing the index, it will be a miscalculation of the index --##
             break
 
     ##-- If the index is not changed, it means there are no row to add more --##
     if not is_index_changed:
-        output_file = os.path.join(output_data_path, file_name)
-        covertToCsv(df, output_file)
+        if file_type == file_type_static[0]:
+            covertToKeystrokesCsv(df, file_path)
+        elif file_type == file_type_static[1]:
+            covertToMouseCsv(df, file_path)
 
 
-def addDummyRowsKeystrokes(file_name):
-    file_path = os.path.join(input_data_path, file_name)
+def addDummyRowsKeystrokes(file_type, file_name, file_path):
     df = pd.read_csv(file_path)
-    addRows(file_name, df)
+    addRows(file_type, file_name, file_path, df)
 
 
-def startMigration():
+def cleanData():
     createDirectoryIfNotExixts(data_dir)
     createDirectoryIfNotExixts(input_data_path)
-    createDirectoryIfNotExixts(output_data_path)
     csv_file_names = find_filenames(input_data_path, ".csv")
 
     for file_name in csv_file_names:
+        file_path = os.path.join(input_data_path, file_name)
         if fnmatch(file_name, '*ks*'):
-            addDummyRowsKeystrokes(file_name)
+            addDummyRowsKeystrokes(file_type_static[0], file_name, file_path)
+        if fnmatch(file_name, '*mt*'):
+            addDummyRowsKeystrokes(file_type_static[1], file_name, file_path)
 
 
-            #####################################
-            #####Delete column by row index######
-            # df.drop(df.index[0], inplace = True)
-            #####################################
-
-            #####################################
-            #####Delete column by column index#####
-            # df.drop(df.columns[0], axis=1, inplace=True)
-            #####################################
-
-            #####################################
-            #####Delete column by column name#####
-
-
-startMigration()
+cleanData()
