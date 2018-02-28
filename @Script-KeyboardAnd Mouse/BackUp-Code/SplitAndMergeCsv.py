@@ -6,20 +6,46 @@ from os import listdir
 data_dir = "Data"
 input_dir = "InputOutput"
 input_data_path = os.path.join(data_dir, input_dir)
-
 file_type_static = ['key_strokes', 'mouse']
 
 
-def cleanData(file_path, file_name):
-    if fnmatch(file_name, '*ks*'):
-        addDummyRowsKeystrokes(file_type_static[0], file_name, file_path)
-    if fnmatch(file_name, '*mt*'):
-        addDummyRowsKeystrokes(file_type_static[1], file_name, file_path)
+def find_filenames(path_to_dir, suffix):
+    filenames = listdir(path_to_dir)
+    return [filename for filename in filenames if filename.endswith(suffix)]
 
 
-def addDummyRowsKeystrokes(file_type, file_name, file_path):
-    df = pd.read_csv(file_path)
-    addRows(file_type, file_name, file_path, df)
+def isNotPathExists(path):
+    if not os.path.exists(path):
+        print(str(path) + ' is created')
+        return True
+    else:
+        # print(str(path) + ' is already exists')
+        return False
+
+
+def createDirectoryIfNotExixts(path):
+    if isNotPathExists(path):
+        os.mkdir(path)
+
+
+def covertToKeystrokesCsv(df, file_dest):
+    df = df[['#KeystrokeID', 'Time', 'IsKeyDown', 'Key']]
+    df.to_csv(file_dest, index=False)
+
+def covertToMouseCsv(df, file_dest):
+    df = df[['Time', 'X', 'Y', 'Type']]
+    df.to_csv(file_dest, index=False)
+
+
+
+def get_key_stroke_row_data(current_time):
+    return {"#KeystrokeID": 0, "Time": current_time, "IsKeyDown": 0, "Key": 'NA'}
+
+def get_mouse_row_data(prior_row, current_time):
+    # print(row)
+    print("Time: " + str(prior_row.Time))
+    return {"Time": current_time, "X": prior_row.X, "Y": prior_row.Y, "Type": prior_row.Type}
+
 
 
 def addRows(file_type, file_name, file_path, df, ind=0):
@@ -70,54 +96,22 @@ def addRows(file_type, file_name, file_path, df, ind=0):
             covertToMouseCsv(df, file_path)
 
 
-def get_key_stroke_row_data(current_time):
-    return {"#KeystrokeID": 0, "Time": current_time, "IsKeyDown": 0, "Key": 'NA'}
+def addDummyRowsKeystrokes(file_type, file_name, file_path):
+    df = pd.read_csv(file_path)
+    addRows(file_type, file_name, file_path, df)
 
 
-def get_mouse_row_data(prior_row, current_time):
-    # print(row)
-    print("Time: " + str(prior_row.Time))
-    return {"Time": current_time, "X": prior_row.X, "Y": prior_row.Y, "Type": prior_row.Type}
-
-
-def covertToKeystrokesCsv(df, file_dest):
-    df = df[['#KeystrokeID', 'Time', 'IsKeyDown', 'Key']]
-    df.to_csv(file_dest, index=False)
-
-
-def covertToMouseCsv(df, file_dest):
-    df = df[['Time', 'X', 'Y', 'Type']]
-    df.to_csv(file_dest, index=False)
-
-
-def find_filenames(path_to_dir, suffix):
-    filenames = listdir(path_to_dir)
-    return [filename for filename in filenames if filename.endswith(suffix)]
-
-
-def isNotPathExists(path):
-    if not os.path.exists(path):
-        print(str(path) + ' is created')
-        return True
-    else:
-        # print(str(path) + ' is already exists')
-        return False
-
-
-def createDirectoryIfNotExixts(path):
-    if isNotPathExists(path):
-        os.mkdir(path)
-
-
-def creatDirAndRunScript():
+def cleanData():
     createDirectoryIfNotExixts(data_dir)
     createDirectoryIfNotExixts(input_data_path)
     csv_file_names = find_filenames(input_data_path, ".csv")
 
     for file_name in csv_file_names:
         file_path = os.path.join(input_data_path, file_name)
-        cleanData(file_path, file_name)
+        if fnmatch(file_name, '*ks*'):
+            addDummyRowsKeystrokes(file_type_static[0], file_name, file_path)
+        if fnmatch(file_name, '*mt*'):
+            addDummyRowsKeystrokes(file_type_static[1], file_name, file_path)
 
 
-####STARTING OF THE SCRIPT####
-creatDirAndRunScript()
+cleanData()
