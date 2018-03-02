@@ -7,19 +7,15 @@ data_dir = "Data"
 input_dir = "InputOutput"
 input_data_path = os.path.join(data_dir, input_dir)
 
-file_type_static = ['key_strokes', 'mouse']
+file_type_static = ['keyboard', 'mouse']
 
 
 def cleanData(file_path, file_name):
-    if fnmatch(file_name, '*ks*'):
-        addDummyRowsKeystrokes(file_type_static[0], file_name, file_path)
-    if fnmatch(file_name, '*mt*'):
-        addDummyRowsKeystrokes(file_type_static[1], file_name, file_path)
-
-
-def addDummyRowsKeystrokes(file_type, file_name, file_path):
     df = pd.read_csv(file_path)
-    addRows(file_type, file_name, file_path, df)
+    if fnmatch(file_name, '*_kp*'):
+        addRows(file_type_static[0], file_name, file_path, df)
+    if fnmatch(file_name, '*_mp*'):
+        addRows(file_type_static[1], file_name, file_path, df)
 
 
 def addRows(file_type, file_name, file_path, df, ind=0):
