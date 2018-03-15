@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import math
 from fnmatch import fnmatch
 from os import listdir
 
@@ -8,17 +9,67 @@ input_dir = "InputOutput"
 input_data_path = os.path.join(data_dir, input_dir)
 
 file_type_static = ['keyboard', 'mouse']
+new_file_extension = "_downsampled.csv"
 
 
 def cleanData(file_path, file_name):
-    df = pd.read_csv(file_path)
+    df = pd.read_csv(file_path, error_bad_lines=False, index_col=False)
+    # print(file_path[file_path.rfind("\\") + 1:file_path.rfind(".csv")])
+    # print(df)
     if fnmatch(file_name, '*_kp*'):
-        addRows(file_type_static[0], file_name, file_path, df)
-    if fnmatch(file_name, '*_mp*'):
-        addRows(file_type_static[1], file_name, file_path, df)
+        mergeRowsForOneSec(file_type_static[0], file_path, df)
+        # if fnmatch(file_name, '*_mp*'):
+        #     mergeRowsForOneSec(file_type_static[1], file_path, df)
 
 
-def addRows(file_type, file_name, file_path, df, ind=0):
+def mergeRowsForOneSec(file_type, file_path, df, ind=0):
+    max_time = int(math.ceil(df['Time'].max()))
+    downsampled_df = pd.DataFrame(columns=["#PressureID", "Time", "Sensor1", "Sensor2", "Sensor3", "Sensor4"])
+
+    for i in range(0, max_time):
+        # for i in range(0, 3):
+        row_data = get_key_pressure_row(df, i)
+        row_df = pd.DataFrame(row_data, index=[i])
+        downsampled_df = pd.concat([downsampled_df, row_df])
+
+    print(downsampled_df)
+    covertToKeyPressureCsv(downsampled_df, file_path)
+
+
+def covertToKeyPressureCsv(df, file_path):
+    file_dest = get_file_path_without_extension(file_path) + new_file_extension
+    df = df[['#PressureID', 'Time', 'Sensor1', 'Sensor2', 'Sensor3', 'Sensor4']]
+    df.to_csv(file_dest, index=False)
+
+
+def get_key_pressure_row(df, i):
+    one_sec_df = df[(i <= df['Time']) & (df['Time'] < i + 1)]
+    one_sec_df_mean = one_sec_df.mean()
+
+    return {
+        "#PressureID": i,
+        "Time": i,
+        "Sensor1": convertToInt(one_sec_df_mean['Sensor1']),
+        "Sensor2": convertToInt(one_sec_df_mean['Sensor2']),
+        "Sensor3": convertToInt(one_sec_df_mean['Sensor3']),
+        "Sensor4": convertToInt(one_sec_df_mean['Sensor4'])
+    }
+
+
+def get_mouse_pressure_row(df, i):
+    one_sec_df = df[(i <= df['Time']) & (df['Time'] < i + 1)]
+    one_sec_df_mean = one_sec_df.mean()
+
+    return {
+        "Time": i,
+        "Sensor1": convertToInt(one_sec_df_mean['Sensor1']),
+        "Sensor2": convertToInt(one_sec_df_mean['Sensor2']),
+        "Sensor3": convertToInt(one_sec_df_mean['Sensor3']),
+        "Sensor4": convertToInt(one_sec_df_mean['Sensor4'])
+    }
+
+
+def addRows(file_type, file_path, df, ind=0):
     # Assigning very first row time from the starting of the ind
     current_time = int(df.loc[0 + ind].Time)
     is_index_changed = False
@@ -53,7 +104,7 @@ def addRows(file_type, file_name, file_path, df, ind=0):
 
         ##-- If the index is not changed, it means there might be some more dummy row to add --##
         if (is_index_changed):
-            addRows(file_type, file_name, file_path, df, row_index)
+            addRows(file_type, file_path, df, row_index)
             ##-- This break is IMPORTANT --##
             ##-- If we continue after changing the index, it will be a miscalculation of the index --##
             break
@@ -84,6 +135,22 @@ def covertToKeystrokesCsv(df, file_dest):
 def covertToMouseCsv(df, file_dest):
     df = df[['Time', 'X', 'Y', 'Type']]
     df.to_csv(file_dest, index=False)
+
+
+def convertToInt(number):
+    return int(round(number))
+
+
+def get_file_path_without_extension(file_path):
+    return file_path[:file_path.rfind(".csv")]
+
+
+def get_file_name_without_extension(file_path):
+    return file_path[file_path.rfind("\\") + 1:file_path.rfind(".csv")]
+
+
+def get_file_dir(file_path):
+    return file_path[:file_path.rfind("\\") + 1]
 
 
 def find_filenames(path_to_dir, suffix):
