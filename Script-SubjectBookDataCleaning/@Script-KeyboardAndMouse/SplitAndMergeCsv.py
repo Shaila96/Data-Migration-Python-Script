@@ -144,4 +144,4 @@ creatDirAndRunScript()
 #
 # def addDummyRows(file_type, file_name, file_path):
 #     df = pd.read_csv(file_path)
-#     addRows(file_type, file_name, file_path, df)
+#     addRowsMouseTrajectory(file_type, file_name, file_path, df)
