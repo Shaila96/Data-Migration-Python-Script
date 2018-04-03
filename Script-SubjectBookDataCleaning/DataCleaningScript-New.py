@@ -8,15 +8,15 @@ data_dir = "Data"
 input_dir = "InputOutput"
 input_data_path = os.path.join(data_dir, input_dir)
 temp_file_dest = None
-# serial = None
 
 ######################################################################################################
 ######################################################################################################
+
+# REMOVE UNNECESSARY COLUMNS WHILE CLEANING FOR PP and KP
 
 file_type_static = ['perinasal', 'key_stroke', 'key_pressure', 'mouse_pressure', 'mouse_trajectory']
 
 perinasal_column_list = ['Frame#', 'Time', 'Perspiration']
-key_stroke_column_list = ['#KeystrokeID', 'Time', 'IsKeyDown', 'Key']
 key_stroke_new_column_list = ['Time', 'Key', 'Serial']
 key_pressure_column_list = ['#PressureID', 'Time', 'Sensor1', 'Sensor2', 'Sensor3', 'Sensor4']
 mouse_pressure_column_list = ['Time', 'Sensor1', 'Sensor2', 'Sensor3', 'Sensor4']
@@ -60,34 +60,25 @@ def addRowsAndSerialKeyStrokes(file_type, file_path, df, ind=0):
         time_diff = temp_time - current_time
 
         if time_diff == 0:
-            if int(row['IsKeyDown']) == 0:
-                if row['Key'] != "BACK":
-                    row_data = get_key_stroke_new_row_data(row, serial)
-                    row_df = pd.DataFrame(row_data, index=[0])
-                    new_key_stroke_df = pd.concat([new_key_stroke_df, row_df])
-                    serial = serial + 1
-                else:
-                    back_key_stroke_list.append(row)
+            new_key_stroke_df, back_key_stroke_list, serial = appendNewRowExceptBackKeyRow(back_key_stroke_list,
+                                                                                           new_key_stroke_df,
+                                                                                           row,
+                                                                                           serial)
         else:
             # NOW ADD THE BACK KEY ROW HERE WITH INCREASING THE SERIAL
             for back_key_stroke in back_key_stroke_list:
-                row_data = get_key_stroke_new_row_data(back_key_stroke, serial)
-                row_df = pd.DataFrame(row_data, index=[0])
-                new_key_stroke_df = pd.concat([new_key_stroke_df, row_df])
-                serial = serial + 1
+                new_key_stroke_df, serial = addKeyStrokeRowWithSerial(new_key_stroke_df, back_key_stroke, serial)
 
+            # RE-INITIALIZE The back_key_stroke_list FOR THE NEXT SECOND
             back_key_stroke_list = []
+
             if (time_diff) == 1:
                 current_time = temp_time
                 serial = 1
-                if int(row['IsKeyDown']) == 0:
-                    if row['Key'] != "BACK":
-                        row_data = get_key_stroke_new_row_data(row, serial)
-                        row_df = pd.DataFrame(row_data, index=[0])
-                        new_key_stroke_df = pd.concat([new_key_stroke_df, row_df])
-                        serial = serial + 1
-                    else:
-                        back_key_stroke_list.append(row)
+                new_key_stroke_df, back_key_stroke_list, serial = appendNewRowExceptBackKeyRow(back_key_stroke_list,
+                                                                                               new_key_stroke_df,
+                                                                                               row,
+                                                                                               serial)
             elif ((time_diff) > 1):
                 for time_in in range(1, time_diff):
                     current_time = current_time + 1
@@ -95,17 +86,33 @@ def addRowsAndSerialKeyStrokes(file_type, file_path, df, ind=0):
                     row_df = pd.DataFrame(new_row, index=[0])
                     new_key_stroke_df = pd.concat([new_key_stroke_df, row_df])
 
-    print(back_key_stroke_list)
+                # ADD THE ROW AFTER ADDING DUMMY ROWS IN BETWEEN THE time_diff
+                current_time = temp_time
+                serial = 1
+                new_key_stroke_df, back_key_stroke_list, serial = appendNewRowExceptBackKeyRow(back_key_stroke_list,
+                                                                                               new_key_stroke_df,
+                                                                                               row,
+                                                                                               serial)
+
     convertToCsv(new_key_stroke_df, file_path, file_type)
 
 
-def addKeyStrokeRowWithSerial(new_key_stroke_df, row, serial):
+
+def appendNewRowExceptBackKeyRow(back_key_stroke_list, new_key_stroke_df, row, serial):
     if int(row['IsKeyDown']) == 0:
-        row_data = get_key_stroke_new_row_data(row, serial)
-        row_df = pd.DataFrame(row_data, index=[0])
-        new_key_stroke_df = pd.concat([new_key_stroke_df, row_df])
-        serial = serial + 1
-        return new_key_stroke_df, serial
+        if row['Key'] != "BACK":
+            new_key_stroke_df, serial = addKeyStrokeRowWithSerial(new_key_stroke_df, row, serial)
+        else:
+            back_key_stroke_list.append(row)
+    return new_key_stroke_df, back_key_stroke_list, serial
+
+
+def addKeyStrokeRowWithSerial(new_key_stroke_df, row, serial):
+    row_data = get_key_stroke_new_row_data(row, serial)
+    row_df = pd.DataFrame(row_data, index=[0])
+    new_key_stroke_df = pd.concat([new_key_stroke_df, row_df])
+    serial = serial + 1
+    return new_key_stroke_df, serial
 
 
 def addRowsMouseTrajectory(file_type, file_path, df, ind=0):
@@ -165,12 +172,6 @@ def convertToCsv(df, file_path, file_type):
     file_dest = get_file_path_without_extension(file_path) + new_file_extension
     df = df[getColumnList(file_type)]
     df.to_csv(file_dest, index=False)
-
-
-# def covertToKeyPressureCsv(df, file_path, file_type):
-#     file_dest = get_file_path_without_extension(file_path) + new_file_extension
-#     df = df[getColumnList(file_type)]
-#     df.to_csv(file_dest, index=False)
 
 
 def getColumnList(file_type):
