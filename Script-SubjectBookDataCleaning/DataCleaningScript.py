@@ -11,16 +11,15 @@ temp_file_dest = None
 
 ######################################################################################################
 ######################################################################################################
-
-# REMOVE UNNECESSARY COLUMNS WHILE CLEANING FOR PP and KP
-
 file_type_static = ['perinasal', 'key_stroke', 'key_pressure', 'mouse_pressure', 'mouse_trajectory']
 
+
 perinasal_column_list = ['Frame#', 'Time', 'Perspiration']
-key_stroke_new_column_list = ['Time', 'Key', 'Serial']
-key_pressure_column_list = ['#PressureID', 'Time', 'Sensor1', 'Sensor2', 'Sensor3', 'Sensor4']
-mouse_pressure_column_list = ['Time', 'Sensor1', 'Sensor2', 'Sensor3', 'Sensor4']
 mouse_trajectory_column_list = ['Time', 'X', 'Y', 'Type']
+key_stroke_new_column_list = ['Time', 'Key', 'Serial']
+
+key_pressure_column_list = []
+mouse_pressure_column_list = []
 
 new_file_extension = "_cleaned.csv"
 
@@ -33,12 +32,18 @@ def cleanDataAndGetNewFile(file_path, file_name):
     df = pd.read_csv(file_path, error_bad_lines=False, index_col=False)
 
     if fnmatch(file_name, '*_pp.csv'):
+        global perinasal_column_list
+        perinasal_column_list = list(df.columns.values)[1:3]
         mergeRowsForOneSec(file_type_static[0], file_path, df)
     if fnmatch(file_name, '*_ks.csv'):
         addRowsAndSerialKeyStrokes(file_type_static[1], file_path, df)
     if fnmatch(file_name, '*_kp.csv'):
+        global key_pressure_column_list
+        key_pressure_column_list = list(df.columns.values)[1:6]
         mergeRowsForOneSec(file_type_static[2], file_path, df)
     if fnmatch(file_name, '*_mp.csv'):
+        global mouse_pressure_column_list
+        mouse_pressure_column_list = list(df.columns.values)
         mergeRowsForOneSec(file_type_static[3], file_path, df)
     if fnmatch(file_name, '*_mt.csv'):
         addRowsMouseTrajectory(file_type_static[4], file_path, df)
@@ -210,26 +215,26 @@ def get_one_sec_row(file_type, df, i):
 
     if file_type == file_type_static[0]:
         return {
-            "Frame#": i,
+            # "Frame#": i,
             "Time": i,
             "Perspiration": get_perspiration_value(one_sec_df_mean)
         }
     elif file_type == file_type_static[2]:
         return {
-            "#PressureID": i,
+            # "#PressureID": i,
             "Time": i,
-            "Sensor1": convertToInt(one_sec_df_mean['Sensor1']),
-            "Sensor2": convertToInt(one_sec_df_mean['Sensor2']),
-            "Sensor3": convertToInt(one_sec_df_mean['Sensor3']),
-            "Sensor4": convertToInt(one_sec_df_mean['Sensor4'])
+            key_pressure_column_list[1]: convertToInt(one_sec_df_mean[key_pressure_column_list[1]]),
+            key_pressure_column_list[2]: convertToInt(one_sec_df_mean[key_pressure_column_list[2]]),
+            key_pressure_column_list[3]: convertToInt(one_sec_df_mean[key_pressure_column_list[3]]),
+            key_pressure_column_list[4]: convertToInt(one_sec_df_mean[key_pressure_column_list[4]])
         }
     elif file_type == file_type_static[3]:
         return {
             "Time": i,
-            "Sensor1": convertToInt(one_sec_df_mean['Sensor1']),
-            "Sensor2": convertToInt(one_sec_df_mean['Sensor2']),
-            "Sensor3": convertToInt(one_sec_df_mean['Sensor3']),
-            "Sensor4": convertToInt(one_sec_df_mean['Sensor4'])
+            mouse_pressure_column_list[1]: convertToInt(one_sec_df_mean[mouse_pressure_column_list[1]]),
+            mouse_pressure_column_list[2]: convertToInt(one_sec_df_mean[mouse_pressure_column_list[2]]),
+            mouse_pressure_column_list[3]: convertToInt(one_sec_df_mean[mouse_pressure_column_list[3]]),
+            mouse_pressure_column_list[4]: convertToInt(one_sec_df_mean[mouse_pressure_column_list[4]])
         }
 
 
