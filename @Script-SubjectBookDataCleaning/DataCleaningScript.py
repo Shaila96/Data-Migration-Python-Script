@@ -14,12 +14,12 @@ temp_file_dest = None
 file_type_static = ['perinasal', 'key_stroke', 'key_pressure', 'mouse_pressure', 'mouse_trajectory']
 
 
-perinasal_column_list = ['Frame#', 'Time', 'Perspiration']
+perinasal_column_list = ['Time', 'Perspiration']
 mouse_trajectory_column_list = ['Time', 'X', 'Y', 'Type']
 key_stroke_new_column_list = ['Time', 'Key', 'Serial']
 
-key_pressure_column_list = []
-mouse_pressure_column_list = []
+key_pressure_column_list = ['Time', 'TopLeft', 'BottomLeft', 'BottomRight', 'TopRight']
+mouse_pressure_column_list = ['Time', 'LeftClick', 'RightClick', 'LeftSide', 'RightSide']
 
 new_file_extension = "_cleaned.csv"
 
@@ -32,20 +32,16 @@ def cleanDataAndGetNewFile(file_path, file_name):
     df = pd.read_csv(file_path, error_bad_lines=False, index_col=False)
 
     if fnmatch(file_name, '*_pp.csv'):
-        global perinasal_column_list
-        perinasal_column_list = list(df.columns.values)[1:3]
+        df = df[perinasal_column_list]
         mergeRowsForOneSec(file_type_static[0], file_path, df)
     if fnmatch(file_name, '*_ks.csv'):
         addRowsAndSerialKeyStrokes(file_type_static[1], file_path, df)
     if fnmatch(file_name, '*_kp.csv'):
-        global key_pressure_column_list
-        key_pressure_column_list = list(df.columns.values)[1:6]
         mergeRowsForOneSec(file_type_static[2], file_path, df)
     if fnmatch(file_name, '*_mp.csv'):
-        global mouse_pressure_column_list
-        mouse_pressure_column_list = list(df.columns.values)
         mergeRowsForOneSec(file_type_static[3], file_path, df)
     if fnmatch(file_name, '*_mt.csv'):
+        df = df[mouse_trajectory_column_list]
         addRowsMouseTrajectory(file_type_static[4], file_path, df)
 
 
